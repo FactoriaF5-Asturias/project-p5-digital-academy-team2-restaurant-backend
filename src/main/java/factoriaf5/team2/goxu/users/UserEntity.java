@@ -35,9 +35,15 @@ public class UserEntity {
     @Column(name = "id_user")
     private Long id;
 
-    private String username;
-    private String password;
+    @Column(nullable = false)
+    private String name;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+    
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "roles_users", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<RoleEntity> roles;
