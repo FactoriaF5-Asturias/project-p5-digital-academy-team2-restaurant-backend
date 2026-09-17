@@ -16,7 +16,7 @@ public class RegisterMapper {
     // Entidad guardada. DTO de respuesta
     public static RegisterDTOResponse toDTO(UserEntity user) {
         return RegisterDTOResponse.builder()
-                .message("User stored successfully")
+                .message("Usuario creado correctamente. Oink.")
                 .build();
     }
 }
