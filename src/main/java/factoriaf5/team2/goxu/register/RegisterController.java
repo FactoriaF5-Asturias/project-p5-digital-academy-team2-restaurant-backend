@@ -2,6 +2,7 @@ package factoriaf5.team2.goxu.register;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,9 +23,15 @@ public class RegisterController {
 
     @PostMapping("")
     public ResponseEntity<RegisterDTOResponse> registerUser(@RequestBody RegisterDTORequest dto) {
+         
+        RegisterDTOResponse response = service.registerUser(dto);
 
-        return ResponseEntity.status(201).body(service.registerUser(dto));
-        
+        if (response == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(RegisterDTOResponse.builder()
+            .message("El correo ya está registrado, goxu")
+            .build());
+        }
+        return ResponseEntity.status(201).body(response); /* Cambio service por response para prevenir que lo llame de nuevo */
     }
-
 }
