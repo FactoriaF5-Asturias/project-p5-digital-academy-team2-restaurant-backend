@@ -1,10 +1,11 @@
 package factoriaf5.team2.goxu.register.dtos;
 
-/* Pendiente validación contraseña */
+import factoriaf5.team2.goxu.register.validation.PasswordMatches;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@PasswordMatches 
 public record RegisterDTORequest(
 
         @NotBlank(message = "El nombre es obligatorio")                          

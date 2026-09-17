@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import factoriaf5.team2.goxu.register.dtos.RegisterDTORequest;
 import factoriaf5.team2.goxu.register.dtos.RegisterDTOResponse;
 
+import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping(path = "${api-endpoint}/register")
@@ -22,7 +24,7 @@ public class RegisterController {
     }
 
     @PostMapping("")
-    public ResponseEntity<RegisterDTOResponse> registerUser(@RequestBody RegisterDTORequest dto) {
+    public ResponseEntity<RegisterDTOResponse> registerUser(@Valid @RequestBody RegisterDTORequest dto) {
          
         RegisterDTOResponse response = service.registerUser(dto);
 
