@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import org.springframework.context.annotation.Bean;            /* Marca como productor de un bean: objeto de Java manejado por ecosistema Spring */
@@ -30,7 +32,7 @@ public class SecurityConfiguration {
         return http.build();
 
     }
-
+    
     @Bean
     CorsConfigurationSource corsConfiguration() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -42,5 +44,10 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+    // Causa error: Bean del PasswordEncoder, para inyectar en el RegisterService y hashear con BCrypt la contraseña
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
