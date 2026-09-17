@@ -27,10 +27,11 @@ public class RegisterController {
         RegisterDTOResponse response = service.registerUser(dto);
 
         if (response == null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(RegisterDTOResponse.builder()
+            .message("El correo ya está registrado, goxu")
+            .build());
         }
-        
-        return ResponseEntity.status(201).body(service.registerUser(dto));
+        return ResponseEntity.status(201).body(response); /* Cambio service por response para prevenir que lo llame de nuevo */
     }
-
 }
