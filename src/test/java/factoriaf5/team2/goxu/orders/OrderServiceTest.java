@@ -31,186 +31,186 @@ import factoriaf5.team2.goxu.users.UserRepository;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
-        @Mock
-        private OrderRepository orderRepository;
+    @Mock
+    private OrderRepository orderRepository;
 
-        @Mock
-        private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-        @Mock
-        private ProductRepository productRepository;
+    @Mock
+    private ProductRepository productRepository;
 
-        @Mock
-        private OrderMapper orderMapper;
+    @Mock
+    private OrderMapper orderMapper;
 
-        @InjectMocks
-        private OrderService orderService;
+    @InjectMocks
+    private OrderService orderService;
 
-        private UserEntity user;
-        private ProductEntity product;
-        private OrderEntity order;
-        private OrderDTOResponse orderResponse;
+    private UserEntity user;
+    private ProductEntity product;
+    private OrderEntity order;
+    private OrderDTOResponse orderResponse;
 
-        @BeforeEach
-        void setUp() {
-                user = UserEntity.builder()
-                                .id(1L)
-                                .name("Andrea")
-                                .build();
+    @BeforeEach
+    void setUp() {
+        user = UserEntity.builder()
+                .id(1L)
+                .name("Andrea")
+                .build();
 
-                product = ProductEntity.builder()
-                                .id(1L)
-                                .name("Fabada Asturiana")
-                                .price(new BigDecimal("14.50"))
-                                .build();
+        product = ProductEntity.builder()
+                .id(1L)
+                .name("Fabada Asturiana")
+                .price(new BigDecimal("14.50"))
+                .build();
 
-                order = OrderEntity.builder()
-                                .id(1L)
-                                .user(user)
-                                .status(OrderStatus.PENDING)
-                                .total(new BigDecimal("14.50"))
-                                .createdAt(LocalDateTime.now())
-                                .build();
+        order = OrderEntity.builder()
+                .id(1L)
+                .user(user)
+                .status(OrderStatus.PENDING)
+                .total(new BigDecimal("14.50"))
+                .createdAt(LocalDateTime.now())
+                .build();
 
-                OrderItemDTOResponse itemResponse = OrderItemDTOResponse.builder()
-                                .id(1L)
-                                .productId(1L)
-                                .productName("Fabada Asturiana")
-                                .quantity(1)
-                                .unitPrice(new BigDecimal("14.50"))
-                                .subtotal(new BigDecimal("14.50"))
-                                .build();
+        OrderItemDTOResponse itemResponse = OrderItemDTOResponse.builder()
+                .id(1L)
+                .productId(1L)
+                .productName("Fabada Asturiana")
+                .quantity(1)
+                .unitPrice(new BigDecimal("14.50"))
+                .subtotal(new BigDecimal("14.50"))
+                .build();
 
-                orderResponse = OrderDTOResponse.builder()
-                                .id(1L)
-                                .userId(1L)
-                                .userName("Andrea")
-                                .status(OrderStatus.PENDING)
-                                .total(new BigDecimal("14.50"))
-                                .items(List.of(itemResponse))
-                                .build();
-        }
+        orderResponse = OrderDTOResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .userName("Andrea")
+                .status(OrderStatus.PENDING)
+                .total(new BigDecimal("14.50"))
+                .items(List.of(itemResponse))
+                .build();
+    }
 
-        @Test
-        void getAll_shouldReturnAllOrdersMapped() {
-                when(orderRepository.findAll()).thenReturn(List.of(order));
-                when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+    @Test
+    void getAll_shouldReturnAllOrdersMapped() {
+        when(orderRepository.findAll()).thenReturn(List.of(order));
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
 
-                List<OrderDTOResponse> result = orderService.getAll();
+        List<OrderDTOResponse> result = orderService.getAll();
 
-                assertThat(result).hasSize(1);
-                assertThat(result.get(0).getUserName()).isEqualTo("Andrea");
-        }
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getUserName()).isEqualTo("Andrea");
+    }
 
-        @Test
-        void getById_shouldReturnOrder_whenExists() {
-                when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-                when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+    @Test
+    void getById_shouldReturnOrder_whenExists() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
 
-                OrderDTOResponse result = orderService.getById(1L);
+        OrderDTOResponse result = orderService.getById(1L);
 
-                assertThat(result.getId()).isEqualTo(1L);
-        }
+        assertThat(result.getId()).isEqualTo(1L);
+    }
 
-        @Test
-        void getById_shouldThrowNotFound_whenOrderDoesNotExist() {
-                when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+    @Test
+    void getById_shouldThrowNotFound_whenOrderDoesNotExist() {
+        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
 
-                assertThatThrownBy(() -> orderService.getById(99L))
-                                .isInstanceOf(ResponseStatusException.class)
-                                .hasMessageContaining("Pedido no encontrado con id 99");
-        }
+        assertThatThrownBy(() -> orderService.getById(99L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Pedido no encontrado con id 99");
+    }
 
-        @Test
-        void create_shouldSaveOrderWithCalculatedTotal() {
-                OrderItemDTORequest itemRequest = OrderItemDTORequest.builder()
-                                .productId(1L)
-                                .quantity(2)
-                                .build();
+    @Test
+    void create_shouldSaveOrderWithCalculatedTotal() {
+        OrderItemDTORequest itemRequest = OrderItemDTORequest.builder()
+                .productId(1L)
+                .quantity(2)
+                .build();
 
-                OrderDTORequest request = OrderDTORequest.builder()
-                                .userId(1L)
-                                .items(List.of(itemRequest))
-                                .build();
+        OrderDTORequest request = OrderDTORequest.builder()
+                .userId(1L)
+                .items(List.of(itemRequest))
+                .build();
 
-                OrderItemEntity itemEntity = OrderItemEntity.builder()
-                                .product(product)
-                                .quantity(2)
-                                .unitPrice(new BigDecimal("14.50"))
-                                .build();
+        OrderItemEntity itemEntity = OrderItemEntity.builder()
+                .product(product)
+                .quantity(2)
+                .unitPrice(new BigDecimal("14.50"))
+                .build();
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-                when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-                when(orderMapper.toEntity(itemRequest, product)).thenReturn(itemEntity);
-                when(orderRepository.save(any(OrderEntity.class))).thenReturn(order);
-                when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(orderMapper.toEntity(itemRequest, product)).thenReturn(itemEntity);
+        when(orderRepository.save(any(OrderEntity.class))).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
 
-                OrderDTOResponse result = orderService.create(request);
+        OrderDTOResponse result = orderService.create(request);
 
-                assertThat(result).isNotNull();
-                verify(orderRepository).save(any(OrderEntity.class));
-        }
+        assertThat(result).isNotNull();
+        verify(orderRepository).save(any(OrderEntity.class));
+    }
 
-        @Test
-        void create_shouldThrowNotFound_whenUserDoesNotExist() {
-                OrderDTORequest request = OrderDTORequest.builder()
-                                .userId(99L)
-                                .items(List.of(OrderItemDTORequest.builder().productId(1L).quantity(1).build()))
-                                .build();
+    @Test
+    void create_shouldThrowNotFound_whenUserDoesNotExist() {
+        OrderDTORequest request = OrderDTORequest.builder()
+                .userId(99L)
+                .items(List.of(OrderItemDTORequest.builder().productId(1L).quantity(1).build()))
+                .build();
 
-                when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-                assertThatThrownBy(() -> orderService.create(request))
-                                .isInstanceOf(ResponseStatusException.class)
-                                .hasMessageContaining("Usuario no encontrado con id 99");
-        }
+        assertThatThrownBy(() -> orderService.create(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Usuario no encontrado con id 99");
+    }
 
-        @Test
-        void create_shouldThrowNotFound_whenProductDoesNotExist() {
-                OrderDTORequest request = OrderDTORequest.builder()
-                                .userId(1L)
-                                .items(List.of(OrderItemDTORequest.builder().productId(99L).quantity(1).build()))
-                                .build();
+    @Test
+    void create_shouldThrowNotFound_whenProductDoesNotExist() {
+        OrderDTORequest request = OrderDTORequest.builder()
+                .userId(1L)
+                .items(List.of(OrderItemDTORequest.builder().productId(99L).quantity(1).build()))
+                .build();
 
-                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-                when(productRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
-                assertThatThrownBy(() -> orderService.create(request))
-                                .isInstanceOf(ResponseStatusException.class)
-                                .hasMessageContaining("Producto no encontrado con id 99");
-        }
+        assertThatThrownBy(() -> orderService.create(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Producto no encontrado con id 99");
+    }
 
-        @Test
-        void updateStatus_shouldChangeStatus_whenOrderExists() {
-                when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-                when(orderRepository.save(order)).thenReturn(order);
-                when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+    @Test
+    void updateStatus_shouldChangeStatus_whenOrderExists() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
 
-                OrderDTOResponse result = orderService.updateStatus(1L, OrderStatus.DELIVERED);
+        OrderDTOResponse result = orderService.updateStatus(1L, OrderStatus.DELIVERED);
 
-                assertThat(result).isNotNull();
-                assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
-        }
+        assertThat(result).isNotNull();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
+    }
 
-        @Test
-        void markAsPaid_shouldSetPaidTrue_whenOrderExists() {
-                when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-                when(orderRepository.save(order)).thenReturn(order);
-                when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+    @Test
+    void markAsPaid_shouldSetPaidTrue_whenOrderExists() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
 
-                OrderDTOResponse result = orderService.markAsPaid(1L);
+        OrderDTOResponse result = orderService.markAsPaid(1L);
 
-                assertThat(result).isNotNull();
-                assertThat(order.isPaid()).isTrue();
-        }
+        assertThat(result).isNotNull();
+        assertThat(order.isPaid()).isTrue();
+    }
 
-        @Test
-        void delete_shouldRemoveOrder_whenExists() {
-                when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+    @Test
+    void delete_shouldRemoveOrder_whenExists() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
-                orderService.delete(1L);
+        orderService.delete(1L);
 
-                verify(orderRepository).delete(order);
-        }
+        verify(orderRepository).delete(order);
+    }
 
 }
