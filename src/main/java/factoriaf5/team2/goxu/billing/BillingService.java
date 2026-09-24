@@ -2,6 +2,7 @@ package factoriaf5.team2.goxu.billing;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import factoriaf5.team2.goxu.billing.dtos.BillingReportDTOResponse;
+import factoriaf5.team2.goxu.billing.dtos.BillingReportFileDTOResponse;
 import factoriaf5.team2.goxu.billing.dtos.InvoiceDTOResponse;
 import factoriaf5.team2.goxu.dashboard.dtos.TopProductDTO;
 import factoriaf5.team2.goxu.orders.OrderEntity;
@@ -21,6 +23,7 @@ import factoriaf5.team2.goxu.orders.OrderRepository;
 import factoriaf5.team2.goxu.orders.OrderStatus;
 import factoriaf5.team2.goxu.orders.dtos.OrderDTOResponse;
 import factoriaf5.team2.goxu.products.ProductEntity;
+import factoriaf5.team2.goxu.storage.CloudStorageService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +35,8 @@ public class BillingService {
 
         private final OrderRepository orderRepository;
         private final OrderMapper orderMapper;
+        private final BillingReportPdfGenerator pdfGenerator;
+        private final CloudStorageService cloudStorageService;
 
         @Transactional(readOnly = true)
         public BillingReportDTOResponse getReport(LocalDate startDate, LocalDate endDate) {
@@ -61,6 +66,23 @@ public class BillingService {
                                 .revenueByDay(revenueByDay)
                                 .ordersByStatus(ordersByStatus)
                                 .topProducts(topProducts)
+                                .build();
+        }
+
+        @Transactional(readOnly = true)
+        public BillingReportFileDTOResponse generateReportPdf(LocalDate startDate, LocalDate endDate) {
+                BillingReportDTOResponse report = getReport(startDate, endDate);
+
+                byte[] pdfContent = pdfGenerator.generate(report);
+
+                String fileName = "informe-ventas-" + startDate + "-a-" + endDate + ".pdf";
+
+                String url = cloudStorageService.uploadFile(fileName, pdfContent, "application/pdf");
+
+                return BillingReportFileDTOResponse.builder()
+                                .fileName(fileName)
+                                .url(url)
+                                .generatedAt(LocalDateTime.now())
                                 .build();
         }
 
