@@ -93,6 +93,13 @@ public class OrderService {
         return orderMapper.toResponse(updated);
     }
 
+    public OrderDTOResponse markAsPaid(Long id) {
+        OrderEntity order = findOrderOrThrow(id);
+        order.setPaid(true);
+        OrderEntity updated = orderRepository.save(order);
+        return orderMapper.toResponse(updated);
+    }
+
     public void delete(Long id) {
         OrderEntity order = findOrderOrThrow(id);
         orderRepository.delete(order);

@@ -24,6 +24,7 @@ public class OrderDTOResponse {
     private String userName;
     private String tableNumber;
     private OrderStatus status;
+    private boolean paid;
     private BigDecimal total;
     private LocalDateTime createdAt;
     private List<OrderItemDTOResponse> items;

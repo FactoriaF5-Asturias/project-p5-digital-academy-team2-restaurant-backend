@@ -45,6 +45,7 @@ public class OrderMapper {
                 .userName(entity.getUser().getName())
                 .tableNumber(entity.getTableNumber())
                 .status(entity.getStatus())
+                .paid(entity.isPaid())
                 .total(entity.getTotal())
                 .createdAt(entity.getCreatedAt())
                 .items(itemResponses)

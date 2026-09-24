@@ -65,6 +65,12 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/pay")
+    public ResponseEntity<OrderDTOResponse> markAsPaid(@PathVariable Long id) {
+        OrderDTOResponse response = service.markAsPaid(id);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         service.delete(id);

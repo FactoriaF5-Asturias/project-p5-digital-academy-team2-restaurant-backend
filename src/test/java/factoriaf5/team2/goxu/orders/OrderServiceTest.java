@@ -193,6 +193,18 @@ class OrderServiceTest {
     }
 
     @Test
+    void markAsPaid_shouldSetPaidTrue_whenOrderExists() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+
+        OrderDTOResponse result = orderService.markAsPaid(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(order.isPaid()).isTrue();
+    }
+
+    @Test
     void delete_shouldRemoveOrder_whenExists() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
