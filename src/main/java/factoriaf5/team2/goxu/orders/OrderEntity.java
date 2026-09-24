@@ -55,6 +55,10 @@ public class OrderEntity {
     @Column(nullable = false)
     private BigDecimal total;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean paid = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
