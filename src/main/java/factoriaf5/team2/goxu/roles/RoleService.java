@@ -9,7 +9,9 @@ import java.util.HashSet;
 public class RoleService {
     
     private final RoleRepository repository;
-    private final Long ROLE_BY_DEFAULT = 1L;
+    //cambio el id(1L) porque lo genera la base de datos (long - RoleName)
+    private static final RoleName DEFAULT_ROLE = RoleName.CUSTOMER;
+
     public RoleService(RoleRepository repository) {
         this.repository = repository;
     }
@@ -17,10 +19,15 @@ public class RoleService {
     public RoleEntity getById(Long id) {
         return repository.findById(id).orElseThrow(); 
     }
-    /* Pendiente excepciones */
-
+        
+    public RoleEntity getByName(RoleName name) {
+        return repository.findByName(name)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Role " + name + " not found. Check that data.sql has been executed"));
+    }
+    // lo mismo, cambio de getById por getByName.
     public Set<RoleEntity> assignDefaultRole() {
-        RoleEntity defaultRole = this.getById(ROLE_BY_DEFAULT);
+        RoleEntity defaultRole = this.getByName(DEFAULT_ROLE);
 
         Set<RoleEntity> roles = new HashSet<>();
         roles.add(defaultRole);
