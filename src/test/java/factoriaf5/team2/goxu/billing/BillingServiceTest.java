@@ -2,6 +2,8 @@ package factoriaf5.team2.goxu.billing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -18,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import factoriaf5.team2.goxu.billing.dtos.BillingReportDTOResponse;
+import factoriaf5.team2.goxu.billing.dtos.BillingReportFileDTOResponse;
 import factoriaf5.team2.goxu.billing.dtos.InvoiceDTOResponse;
 import factoriaf5.team2.goxu.orders.OrderEntity;
 import factoriaf5.team2.goxu.orders.OrderItemEntity;
@@ -27,6 +30,7 @@ import factoriaf5.team2.goxu.orders.OrderStatus;
 import factoriaf5.team2.goxu.orders.dtos.OrderDTOResponse;
 import factoriaf5.team2.goxu.orders.dtos.OrderItemDTOResponse;
 import factoriaf5.team2.goxu.products.ProductEntity;
+import factoriaf5.team2.goxu.storage.CloudStorageService;
 
 @ExtendWith(MockitoExtension.class)
 class BillingServiceTest {
@@ -36,6 +40,12 @@ class BillingServiceTest {
 
     @Mock
     private OrderMapper orderMapper;
+
+    @Mock
+    private BillingReportPdfGenerator pdfGenerator;
+
+    @Mock
+    private CloudStorageService cloudStorageService;
 
     @InjectMocks
     private BillingService billingService;
@@ -57,6 +67,7 @@ class BillingServiceTest {
         OrderEntity insideRange = OrderEntity.builder()
                 .id(1L)
                 .status(OrderStatus.DELIVERED)
+                .paid(true)
                 .total(new BigDecimal("29.00"))
                 .createdAt(LocalDateTime.of(2026, 9, 10, 13, 0))
                 .items(List.of(item))
@@ -65,6 +76,7 @@ class BillingServiceTest {
         OrderEntity outsideRange = OrderEntity.builder()
                 .id(2L)
                 .status(OrderStatus.DELIVERED)
+                .paid(true)
                 .total(new BigDecimal("18.00"))
                 .createdAt(LocalDateTime.of(2026, 8, 1, 13, 0))
                 .items(List.of())
@@ -84,6 +96,26 @@ class BillingServiceTest {
     }
 
     @Test
+    void getReport_shouldExcludeUnpaidOrders_evenWithinDateRange() {
+        OrderEntity unpaidOrder = OrderEntity.builder()
+                .id(3L)
+                .status(OrderStatus.DELIVERED)
+                .paid(false)
+                .total(new BigDecimal("14.50"))
+                .createdAt(LocalDateTime.of(2026, 9, 15, 13, 0))
+                .items(List.of())
+                .build();
+
+        when(orderRepository.findAll()).thenReturn(List.of(unpaidOrder));
+
+        BillingReportDTOResponse result = billingService.getReport(
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
+
+        assertThat(result.getTotalOrders()).isEqualTo(0);
+        assertThat(result.getTotalRevenue()).isEqualTo(BigDecimal.ZERO);
+    }
+
+    @Test
     void getReport_shouldReturnZeroValues_whenNoOrdersInRange() {
         when(orderRepository.findAll()).thenReturn(List.of());
 
@@ -93,6 +125,23 @@ class BillingServiceTest {
         assertThat(result.getTotalOrders()).isEqualTo(0);
         assertThat(result.getTotalRevenue()).isEqualTo(BigDecimal.ZERO);
         assertThat(result.getTopProducts()).isEmpty();
+    }
+
+    @Test
+    void generateReportPdf_shouldGeneratePdfAndUploadIt_returningFileInfo() {
+        when(orderRepository.findAll()).thenReturn(List.of());
+
+        byte[] fakePdf = "%PDF-fake".getBytes();
+        when(pdfGenerator.generate(any(BillingReportDTOResponse.class))).thenReturn(fakePdf);
+        when(cloudStorageService.uploadFile(any(String.class), eq(fakePdf), eq("application/pdf")))
+                .thenReturn("https://storage.example.com/informe-ventas.pdf");
+
+        BillingReportFileDTOResponse result = billingService.generateReportPdf(
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
+
+        assertThat(result.getUrl()).isEqualTo("https://storage.example.com/informe-ventas.pdf");
+        assertThat(result.getFileName()).contains("2026-09-01").contains("2026-09-30");
+        assertThat(result.getGeneratedAt()).isNotNull();
     }
 
     @Test
