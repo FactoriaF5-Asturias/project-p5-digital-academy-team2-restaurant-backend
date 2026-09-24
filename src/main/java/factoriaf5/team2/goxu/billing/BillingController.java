@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import factoriaf5.team2.goxu.billing.dtos.BillingReportDTOResponse;
+import factoriaf5.team2.goxu.billing.dtos.BillingReportFileDTOResponse;
 import factoriaf5.team2.goxu.billing.dtos.InvoiceDTOResponse;
 
 @RestController
@@ -28,6 +29,14 @@ public class BillingController {
             @RequestParam LocalDate endDate) {
 
         return ResponseEntity.ok(service.getReport(startDate, endDate));
+    }
+
+    @GetMapping("/report/pdf")
+    public ResponseEntity<BillingReportFileDTOResponse> getReportPdf(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+
+        return ResponseEntity.ok(service.generateReportPdf(startDate, endDate));
     }
 
     @GetMapping("/invoice/{orderId}")
