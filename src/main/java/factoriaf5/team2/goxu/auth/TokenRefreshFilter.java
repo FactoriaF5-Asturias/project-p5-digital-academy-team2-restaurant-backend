@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class TokenRefreshFilter extends OncePerRequestFilter {
     
-    public static final String HEADER = "Nombre cabecera pendiente";
+    public static final String HEADER = "X-Refreshed-Token";
 
     private final TokenService tokenService;
 
