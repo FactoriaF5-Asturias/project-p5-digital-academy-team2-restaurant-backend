@@ -1,6 +1,28 @@
 package factoriaf5.team2.goxu.config;
 
+import factoriaf5.team2.goxu.auth.TokenRefreshFilter;
+import factoriaf5.team2.goxu.auth.TokenService;
+
+import static org.springframework.security.config.Customizer.withDefaults;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+
 import java.util.Arrays;
+import java.util.List;
+import java.time.Duration;
+
+import javax.crypto.spec.SecretKeySpec;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -18,19 +40,49 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration 
 @EnableWebSecurity 
 public class SecurityConfiguration {
+    
+    @Value("${api-endpoint}")
+    private String endpoint;
+
+    @Value("${jwt.key}")
+    private String key;
 
     @Bean 
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
+    SecurityFilterChain securityFilterChain(HttpSecurity http, TokenService tokenService) 
+    throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfiguration()))
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
-            );
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers(HttpMethod.POST, endpoint + "/register").permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .httpBasic(withDefaults())
+            .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.decoder(jwtDecoder())))
+            .addFilterAfter(new TokenRefreshFilter(tokenService), BearerTokenAuthenticationFilter.class);
 
         return http.build();
 
+    }
+    //Uso key.getBytes para pasar el texto a bytes (criptografía). Lo exige Nimbus.
+    //Se hila con TokenService vía JwsHeader.woth(MacAlgoritm.HS512) porque encoder necesitaba saber que algoritmo usar.
+    @Bean 
+    JwtEncoder jwtEncoder() {
+        return new NimbusJwtEncoder(new ImmutableSecret<>(key.getBytes()));
+    }
+    //SecretKeySpec convierte bytes en SecretKey.
+    @Bean
+    JwtDecoder jwtDecoder() {
+        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "HmacSHA512");
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey)
+                .macAlgorithm(MacAlgorithm.HS512)
+                .build();
+        decoder.setJwtValidator(new JwtTimestampValidator(Duration.ZERO));
+        return decoder;
     }
     
     @Bean
@@ -39,7 +91,8 @@ public class SecurityConfiguration {
         configuration.setAllowCredentials(true);
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setExposedHeaders(List.of(TokenRefreshFilter.HEADER));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
